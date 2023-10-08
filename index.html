@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>地理位置上传</title>
+  </head>
+  <body></body>
+
+  <script>
+    // 获取时间
+    var now = new Date();
+
+    var year = now.getFullYear(); // 获取年份
+    var month = now.getMonth() + 1; // 获取月份（注意：月份从0开始，所以需要加1）
+    var day = now.getDate(); // 获取日期
+    var hours = now.getHours(); // 获取小时
+    var minutes = now.getMinutes(); // 获取分钟
+    var seconds = now.getSeconds(); // 获取秒数
+    var riqi = month + "-" + day;
+    var time = hours + ":" + minutes + ":" + seconds;
+    console.log("年：" + year, "月日：" + riqi, "时间：" + time);
+
+    navigator.geolocation.getCurrentPosition(
+      function (position) {
+        // 成功获取位置信息
+        const wd = position.coords.latitude; //纬度
+        const jd = position.coords.longitude; //经度
+        document.write("纬度：" + wd + "，经度：" + jd);
+
+        //'https://api.opencagedata.com/geocode/v1/json?key=d721c6213ca04100bc4a8df8d6732e77&q={{wd}}%2C"{{jd}}"&pretty=1'
+
+        // 定义请求的URL
+
+        // 使用fetch函数发送请求
+        fetch(
+          "https://api.opencagedata.com/geocode/v1/json?key=d721c6213ca04100bc4a8df8d6732e77&q=" +
+            wd +
+            "%2C" +
+            jd +
+            "&pretty=1"
+        )
+          .then((response) => {
+            // 确保请求成功
+            if (response.ok) {
+              // 解析JSON数据
+              return response.json();
+            } else {
+              throw new Error("请求失败");
+            }
+          })
+          .then((data) => {
+            // 提取所需的数据
+            const city = data.results[0].components.city;
+            const city_distric = data.results[0].components.city_district;
+            const college = data.results[0].components.college;
+            const country = data.results[0].components.country;
+            const postcode = data.results[0].components.postcode;
+            const road = data.results[0].components.road;
+            const state = data.results[0].components.state;
+            const formatted = data.results[0].formatted;
+
+            // 打印提取的数据
+            console.log("市： " + city);
+            console.log("区 " + city_distric);
+            console.log("大致位置 " + college);
+            console.log("国家 " + country);
+            console.log("邮编 " + postcode);
+            console.log("道路 " + road);
+            console.log("省 " + state);
+            console.log("具体位置 " + formatted);
+
+            const json = JSON.stringify({
+              country: country, //国家
+              state: state, //省
+              city: city, //市
+              city_distric: city_distric, //区
+              college: college, //大致位置
+              postcode: postcode, //邮编
+              road: road, //道路
+              formatted: formatted, //具体位置
+            });
+            // 打印 JSON 数据
+            console.log(json);
+            // 将数据转换为 Base64
+            const base64Data = btoa(unescape(encodeURIComponent(json)));
+            // 打印结果
+            console.log(base64Data);
+
+            var data = {
+              access_token: "7f8823412c1b2262f256ee292d7d6fa2", // 替换为有效的访问令牌
+              content: base64Data,
+              message: "json",
+            };
+
+            var url =
+              "https://gitee.com/api/v5/repos/xiang-520/base64/contents/" +
+              riqi +
+              "/" +
+              time +
+              ".json";
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader(
+              "Content-Type",
+              "application/json;charset=UTF-8"
+            );
+
+            xhr.onload = function () {
+              if (xhr.status === 201) {
+                console.log("数据上传成功!");
+                alert("信息提交成功");
+              } else {
+                console.log("数据上传失败.");
+                alert("信息提交失败，请再次尝试。");
+              }
+            };
+
+            xhr.onerror = function () {
+              console.log("请求异常.");
+              alert("信息提交失败，请再次尝试。");
+            };
+
+            xhr.send(JSON.stringify(data));
+          })
+          .catch((error) => {
+            console.error("发生错误:", error);
+          });
+      },
+      function (error) {
+        // 获取位置信息失败
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            document.write("用户拒绝了地理定位请求");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            document.write("无法获取位置信息");
+            break;
+          case error.TIMEOUT:
+            document.write("请求获取用户位置超时");
+            break;
+          case error.UNKNOWN_ERROR:
+            document.write("发生未知错误");
+            break;
+        }
+      }
+    );
+  </script>
+</html>
